@@ -9,21 +9,21 @@
 import UIKit
 import Foundation
 
-class ContainerViewController : UIViewController {
+open class ContainerViewController : UIViewController {
     
     var currentViewSegue : String?
     var currentController : UIViewController?
-    var closureName: ((_ container : UIViewController, _ fromVC : UIViewController, _ toVC : UIViewController) -> Void)?
+    var completedTransitionClosure: ((_ container : UIViewController, _ fromVC : UIViewController, _ toVC : UIViewController) -> Void)?
     var serialTransitionQueue : DispatchQueue
     
     var firstVC : UIViewController?
     var secondVC : UIViewController?
     
-    required init?(coder aDecoder: NSCoder) {
+    public required init?(coder aDecoder: NSCoder) {
         self.serialTransitionQueue = DispatchQueue(label: "com.EmbeddedSwapping.queue");
         super.init(coder: aDecoder);
         
-        closureName = { (container : UIViewController, fromVC : UIViewController, toVC : UIViewController) in
+        completedTransitionClosure = { (container : UIViewController, fromVC : UIViewController, toVC : UIViewController) in
             
             fromVC.view.removeFromSuperview()
             fromVC.removeFromParentViewController()
@@ -35,7 +35,7 @@ class ContainerViewController : UIViewController {
     }
     
     
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+    open override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         let destinationVC : UIViewController = segue.destination
         let destinationView : UIView = destinationVC.view
         
@@ -55,24 +55,11 @@ class ContainerViewController : UIViewController {
     
     
     func moveFromViewController(from : UIViewController, to : UIViewController){
-        serialTransitionQueue.sync {
-            DispatchQueue.main.sync {
-                to.willMove(toParentViewController: self)
-                to.view?.frame = CGRect(x: 0, y: 0, width: self.view.frame.size.width, height: self.view.frame.size.height)
-                self.addChildViewController(to)
-                self.closureName!(self, from, to)
-            }
+        DispatchQueue.main.async {
+            to.willMove(toParentViewController: self)
+            to.view?.frame = CGRect(origin: CGPoint.zero, size: CGSize(width: self.view.frame.width, height: self.view.frame.height))
+            self.addChildViewController(to)
+            self.completedTransitionClosure?(self, from, to)
         }
-        
-        
-//        dispatch_async(serialTransitionQueue, { () -> Void in
-//            dispatch_sync(dispatch_get_main_queue(), { () -> Void in
-//                to.willMoveToParentViewController(self)
-//                to.view?.frame = CGRectMake(0, 0, self.view.frame.size.width, self.view.frame.size.height)
-//                self.addChildViewController(to)
-//                self.closureName!(container:self, fromVC:from, toVC:to)
-//                //TODO - add animation block
-//            })
-//        })
     }
 }

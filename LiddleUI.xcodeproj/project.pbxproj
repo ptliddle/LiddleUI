@@ -23,7 +23,7 @@
 		D07E99841CEA49F3008AC7A2 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		D07E998A1CEA4A2D008AC7A2 /* ContainerViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContainerViewController.swift; sourceTree = "<group>"; };
 		D07E998B1CEA4A2D008AC7A2 /* EmptySegue.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EmptySegue.swift; sourceTree = "<group>"; };
-		D07E99921CEA4A85008AC7A2 /* LiddleUI.podspec */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LiddleUI.podspec; sourceTree = SOURCE_ROOT; };
+		D07E99921CEA4A85008AC7A2 /* LiddleUI.podspec */ = {isa = PBXFileReference; fileEncoding = 1; lastKnownFileType = text; path = LiddleUI.podspec; sourceTree = SOURCE_ROOT; };
 		D092412C1D8CE82E00DDAE7A /* QueryMapViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = QueryMapViewController.swift; sourceTree = "<group>"; };
 		D35D0B3F6B9DE7CB3A74798A /* Pods_LiddleUI.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_LiddleUI.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
