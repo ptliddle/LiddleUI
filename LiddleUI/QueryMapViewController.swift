@@ -20,13 +20,16 @@ open class PFMapObject : PFObject {
     @NSManaged open var coordinate : PFGeoPoint?
 }
 
+
 public protocol QueryMapDelegate {
     func mapView(_ mapView: MKMapView, viewForAnnotation annotation: MKAnnotation, dataModel : PFMapObject?) -> MKAnnotationView?
 }
 
-public extension MKPointAnnotation {
-    static func withCoordinate(_ coordinate : CLLocationCoordinate2D) -> MKPointAnnotation {
-        let point = MKPointAnnotation()
+open class PFPointAnnotation : MKPointAnnotation {
+    open var associatedObject : PFMapObject?
+    
+    static func withCoordinate(_ coordinate : CLLocationCoordinate2D) -> PFPointAnnotation {
+        let point = PFPointAnnotation()
         point.coordinate = coordinate
         return point
     }
@@ -75,8 +78,12 @@ open class QueryMapViewController: UIViewController, MKMapViewDelegate {
         defaultUserTrackingMode = mapView.userTrackingMode
     }
     
-    open func createAnnotation(forObject object : PFMapObject) -> MKPointAnnotation {
-        return MKPointAnnotation.withCoordinate(object.coordinate!.asCoordinate())
+    open func createAnnotation(forObject object : PFMapObject) -> PFPointAnnotation {
+        return PFPointAnnotation.withCoordinate(object.coordinate!.asCoordinate())
+    }
+    
+    open func annotation(selectedWithObject object : PFMapObject) {
+        //Override in sub class to handle select behavior
     }
 }
 
@@ -90,7 +97,7 @@ extension CLLocation {
 extension QueryMapViewController {
 
     @objc(mapView:viewForAnnotation:) open func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
-        if let mapAnnotation = annotation as? MKPointAnnotation, let object = objectToAnnotations?[mapAnnotation] {
+        if let mapAnnotation = annotation as? PFPointAnnotation, let object = objectToAnnotations?[mapAnnotation] {
             return self.mapView(mapView, viewForAnnotation: mapAnnotation, dataModel: object)
         }
         return self.mapView(mapView, viewForAnnotation: annotation, dataModel: nil)
@@ -112,34 +119,23 @@ extension QueryMapViewController {
         lastRegion = mapView.region
     }
     
+    @objc(mapView:didSelectAnnotationView:) open func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
+        if let object = (view.annotation as? PFPointAnnotation)?.associatedObject {
+            self.annotation(selectedWithObject: object)
+        }
+    }
+    
     @objc(mapView:didUpdateUserLocation:) open func mapView(_ mapView: MKMapView, didUpdate userLocation: MKUserLocation) {
-        
+
         updateFromLocationChange = true
-        
+
         let region = MKCoordinateRegion(center: userLocation.coordinate, span: MKCoordinateSpan(latitudeDelta: 100, longitudeDelta: 100))
         supressRegionUpdate = true
         self.mapView.setRegion(region, animated: true)
         reloadDataForCurrentRegion {
             self.refreshMapDisplay()
         }
-        
-        
-        
-//        if let location = mapView.userLocation.location {
-//            if let previousLocation = lastLocation {
-//                if location.distanceFromLocation(previousLocation) > mapDistanceQueryUpdateTrigger {
-//                    self.reloadDataForCurrentRegion()
-//                }
-//            }
-//            else {
-//                 self.reloadDataForCurrentRegion()
-//            }
-//            
-//            lastLocation = location
-//        }
     }
-    
-    
     
     public func regionChanged(_ region : MKCoordinateRegion) -> Bool {
         if let previousRegion : MKCoordinateRegion = lastRegion {
@@ -293,16 +289,29 @@ public extension QueryMapViewController {
     
     func loadObjectsCompletedSuccesfully(_ objects : [PFMapObject], completion : (() -> ())? = nil) {
         
-        clearExistingAnnotations()
+//        clearExistingAnnotations()
         
-        objects.forEach { (object) in
-            let annotation = createAnnotation(forObject: object)
-            objectToAnnotations?[annotation] = object
-            
-            DispatchQueue.main.async(execute: {
-                self.mapView.addAnnotation(annotation)
-            })
+        let newAnnotations = objects.map { (mapObject) -> PFPointAnnotation in
+            let annotation = createAnnotation(forObject: mapObject)
+            objectToAnnotations?[annotation] = mapObject
+            return annotation
         }
+        
+//        objects.forEach { (object) in
+//            let annotation = createAnnotation(forObject: object)
+//            objectToAnnotations?[annotation] = object
+//
+//            DispatchQueue.main.async(execute: {
+//                self.mapView.addAnnotation(annotation)
+//            })
+//        }
+        
+        DispatchQueue.main.async {
+            self.mapView.removeAnnotations(self.mapView.annotations)
+            self.mapView.addAnnotations(newAnnotations)
+        }
+        
+        self.objectToAnnotations?.removeAll(keepingCapacity: true)
         
         completion?()
     }
@@ -311,14 +320,6 @@ public extension QueryMapViewController {
         print("failed to load objects with error: \(error)")
     }
     
-    
-    func clearExistingAnnotations() {
-        DispatchQueue.main.async { 
-            self.mapView.removeAnnotations(self.mapView.annotations)
-        }
-        
-        self.objectToAnnotations?.removeAll(keepingCapacity: true)
-    }
     
     open func refreshLoadingView() {
         //Can be overridden to show a loading view
