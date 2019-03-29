@@ -297,8 +297,8 @@ extension QueryMapViewController {
             
             self.objectsDidLoad(error as NSError?)
             
-            if let _ = error {
-                source.trySetError(error!)
+            if let error = error {
+                source.trySetError(error)
             } else {
                 source.trySetResult(foundObjects as AnyObject?)
             }

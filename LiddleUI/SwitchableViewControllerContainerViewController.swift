@@ -59,7 +59,7 @@ import UIKit
         }
         
         var existingInstance: UIViewController?
-        for childViewController in childViewControllers {
+        for childViewController in children {
             if childViewController.isKind(of: type(of: segue.destination)) {
                 existingInstance = childViewController
             }
@@ -68,11 +68,11 @@ import UIKit
         let newCurrentVC: UIViewController
         if let existingInstance = existingInstance {
             newCurrentVC = existingInstance
-            self.view.bringSubview(toFront: newCurrentVC.view)
+            self.view.bringSubviewToFront(newCurrentVC.view)
 
         } else {
             newCurrentVC = segue.destination
-            self.addChildViewController(newCurrentVC)
+            self.addChild(newCurrentVC)
             newCurrentVC.view.frame = self.view.bounds
             self.view.addSubview(newCurrentVC.view)
         }
@@ -87,7 +87,7 @@ import UIKit
     }
     
     private func hideAllViews(exceptViewFoVC vcToShow : UIViewController) {
-        self.childViewControllers.forEach({ vc in
+        self.children.forEach({ vc in
             if(vc != vcToShow) {
                 vc.view.isHidden = true
             }
@@ -95,7 +95,7 @@ import UIKit
     }
     
     func replaceBackButton() {
-        let backBtn = UIBarButtonItem(title: "TEST", style: UIBarButtonItemStyle.plain, target: nil, action: nil)
+        let backBtn = UIBarButtonItem(title: "TEST", style: UIBarButtonItem.Style.plain, target: nil, action: nil)
         self.navigationItem.leftBarButtonItem = backBtn
     }
     
