@@ -20,13 +20,16 @@ open class PFMapObject : PFObject {
     @NSManaged open var coordinate : PFGeoPoint?
 }
 
+
 public protocol QueryMapDelegate {
     func mapView(_ mapView: MKMapView, viewForAnnotation annotation: MKAnnotation, dataModel : PFMapObject?) -> MKAnnotationView?
 }
 
-public extension MKPointAnnotation {
-    static func withCoordinate(_ coordinate : CLLocationCoordinate2D) -> MKPointAnnotation {
-        let point = MKPointAnnotation()
+open class PFPointAnnotation : MKPointAnnotation {
+    open var associatedObject : PFMapObject?
+    
+    static func withCoordinate(_ coordinate : CLLocationCoordinate2D) -> PFPointAnnotation {
+        let point = PFPointAnnotation()
         point.coordinate = coordinate
         return point
     }
@@ -35,10 +38,11 @@ public extension MKPointAnnotation {
 open class QueryMapViewController: UIViewController, MKMapViewDelegate {
 
     @IBOutlet open var mapView : MKMapView!
+    @IBOutlet weak var reloadDataButton: UIButton?
     
     static let metersPerMile = 1609.34
     
-    open var mapDistanceQueryUpdateTrigger : CLLocationDistance = 10
+    open var mapDistanceQueryUpdateTrigger : CLLocationDistance = 250 //10
     
     let kCoordinateKey = "coordinate"
     let kOrderByKey = "createdAt"
@@ -58,25 +62,34 @@ open class QueryMapViewController: UIViewController, MKMapViewDelegate {
     open var objectToAnnotations : [MKPointAnnotation : PFMapObject]? = [:]
     
     var loading : Bool = false
-    var loadingViewEnabled = true;
-    var loadingView : UIView?
+//    var loadingViewEnabled = true;
+//    var loadingView : UIView?
     
     var forceNetworkQueryOnNoHits : Bool = false
     var stopTrackingUserLocationOnInteraction = false
     
     open var userDraggedMap : Bool = false
     open var updateFromLocationChange : Bool = false
+
     
     fileprivate var defaultUserTrackingMode : MKUserTrackingMode!
     fileprivate var supressRegionUpdate = false
     
+    open var previousSearchArea : CLCircularRegion?
+    
     open override func viewDidLoad() {
         super.viewDidLoad()
+        reloadDataButton?.isEnabled = false
+        reloadDataButton?.setTitleColor(.white, for: .normal)
         defaultUserTrackingMode = mapView.userTrackingMode
     }
     
-    open func createAnnotation(forObject object : PFMapObject) -> MKPointAnnotation {
-        return MKPointAnnotation.withCoordinate(object.coordinate!.asCoordinate())
+    open func createAnnotation(forObject object : PFMapObject) -> PFPointAnnotation {
+        return PFPointAnnotation.withCoordinate(object.coordinate!.asCoordinate())
+    }
+    
+    open func annotation(selectedWithObject object : PFMapObject) {
+        //Override in sub class to handle select behavior
     }
 }
 
@@ -90,7 +103,7 @@ extension CLLocation {
 extension QueryMapViewController {
 
     @objc(mapView:viewForAnnotation:) open func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
-        if let mapAnnotation = annotation as? MKPointAnnotation, let object = objectToAnnotations?[mapAnnotation] {
+        if let mapAnnotation = annotation as? PFPointAnnotation, let object = objectToAnnotations?[mapAnnotation] {
             return self.mapView(mapView, viewForAnnotation: mapAnnotation, dataModel: object)
         }
         return self.mapView(mapView, viewForAnnotation: annotation, dataModel: nil)
@@ -106,57 +119,63 @@ extension QueryMapViewController {
     open func mapView(_ mapView: MKMapView, regionDidChangeAnimated animated: Bool) {
         print("Map Region Did Update")
         if regionChanged(mapView.region) {
-            self.reloadDataForCurrentRegion()
+            self.loadDataForCurrentRegion()
+            reloadDataButton?.isEnabled = true
+            reloadDataButton?.setTitleColor(.red, for: .normal)
+        }
+        else {
+            reloadDataButton?.isEnabled = false
+            reloadDataButton?.setTitleColor(.white, for: .normal)
         }
         
         lastRegion = mapView.region
     }
     
+    @objc(mapView:didSelectAnnotationView:) open func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
+        if let object = (view.annotation as? PFPointAnnotation)?.associatedObject {
+            self.annotation(selectedWithObject: object)
+        }
+    }
+    
     @objc(mapView:didUpdateUserLocation:) open func mapView(_ mapView: MKMapView, didUpdate userLocation: MKUserLocation) {
-        
+
         updateFromLocationChange = true
-        
+
         let region = MKCoordinateRegion(center: userLocation.coordinate, span: MKCoordinateSpan(latitudeDelta: 100, longitudeDelta: 100))
         supressRegionUpdate = true
         self.mapView.setRegion(region, animated: true)
-        reloadDataForCurrentRegion {
+        loadDataForCurrentRegion {
             self.refreshMapDisplay()
         }
-        
-        
-        
-//        if let location = mapView.userLocation.location {
-//            if let previousLocation = lastLocation {
-//                if location.distanceFromLocation(previousLocation) > mapDistanceQueryUpdateTrigger {
-//                    self.reloadDataForCurrentRegion()
-//                }
-//            }
-//            else {
-//                 self.reloadDataForCurrentRegion()
-//            }
-//            
-//            lastLocation = location
-//        }
     }
-    
-    
     
     public func regionChanged(_ region : MKCoordinateRegion) -> Bool {
-        if let previousRegion : MKCoordinateRegion = lastRegion {
-            let previousLocation = CLLocation.locationFromCoordinate(previousRegion.center)
-            let currentLocation = CLLocation.locationFromCoordinate(region.center)
-            
-            if currentLocation.distance(from: previousLocation) < mapDistanceQueryUpdateTrigger {
-                return false
-            }
+        
+        guard let previousSearchArea = previousSearchArea else {
+            return true
         }
         
-        return true
+        let currentLocation = CLLocation.locationFromCoordinate(region.center)
+        
+        return !previousSearchArea.contains(currentLocation.coordinate)
+        
+//        if let previousRegion : MKCoordinateRegion = lastRegion {
+//            let previousLocation = CLLocation.locationFromCoordinate(previousRegion.center)
+//            let currentLocation = CLLocation.locationFromCoordinate(region.center)
+//
+//            if currentLocation.distance(from: previousLocation) < mapDistanceQueryUpdateTrigger {
+//                return false
+//            }
+//        }
+//
+//        return true
     }
     
-    public func reloadDataForCurrentRegion(_ complete : (() -> ())? = nil) {
-        let searchRadius = calculateRegionRadius(mapView.region) / QueryMapViewController.metersPerMile
-        loadObjects(searchRadius, clear: true, completion: complete)
+    public func loadDataForCurrentRegion(_ complete : (() -> ())? = nil) {
+        let radius = calculateRegionRadius(mapView.region)
+        let searchRadius = radius / QueryMapViewController.metersPerMile
+        previousSearchArea = CLCircularRegion(center: mapView.region.center, radius: radius, identifier: "LastSearch")
+        _ = loadObjects(searchRadius, clear: true, completion: complete)
     }
     
     public func calculateRegionRadius(_ region : MKCoordinateRegion) -> CLLocationDistance {
@@ -198,30 +217,27 @@ extension QueryMapViewController {
             self.mapView.setNeedsDisplay()
         })
     }
-}
 
-//MARK: Touch methods
-public extension QueryMapViewController {
+
+//  MARK: Touch methods]
     open override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
        userInteractedWithMap()
     }
-}
 
-//MARK: Data Methods
-public extension QueryMapViewController {
     
+//  MARK: Data Methods
     public func objectsWillLoad() {
         if(firstLoad) {
             //_refreshLoadingView
         }
-        self.refreshLoadingView()
+//        self.refreshLoadingView()
     }
     
     public func objectsDidLoad(_ error : NSError?) {
         if (firstLoad) {
             firstLoad = false
         }
-        self.refreshLoadingView()
+//        self.refreshLoadingView()
     }
     
     // Alters a query to add functionality like pagination
@@ -256,7 +272,8 @@ public extension QueryMapViewController {
         
         let source : BFTaskCompletionSource = BFTaskCompletionSource<AnyObject>()
         query.findObjectsInBackground { (foundObjects, error) in
-            if let errorCode = (error as? NSError)?.code , Parse.isLocalDatastoreEnabled() && query.cachePolicy != PFCachePolicy.cacheOnly && errorCode == PFErrorCode.errorCacheMiss.rawValue {
+            
+            if let errorCode = (error as NSError?)?.code , Parse.isLocalDatastoreEnabled() && query.cachePolicy != PFCachePolicy.cacheOnly && errorCode == PFErrorCode.errorCacheMiss.rawValue {
                 // no-op on cache miss
                 return
             }
@@ -280,8 +297,8 @@ public extension QueryMapViewController {
             
             self.objectsDidLoad(error as NSError?)
             
-            if let _ = error {
-                source.trySetError(error!)
+            if let error = error {
+                source.trySetError(error)
             } else {
                 source.trySetResult(foundObjects as AnyObject?)
             }
@@ -293,15 +310,26 @@ public extension QueryMapViewController {
     
     func loadObjectsCompletedSuccesfully(_ objects : [PFMapObject], completion : (() -> ())? = nil) {
         
-        clearExistingAnnotations()
+//        clearExistingAnnotations()
         
-        objects.forEach { (object) in
-            let annotation = createAnnotation(forObject: object)
-            objectToAnnotations?[annotation] = object
-            
-            DispatchQueue.main.async(execute: {
-                self.mapView.addAnnotation(annotation)
-            })
+        let newAnnotations = objects.map { (mapObject) -> PFPointAnnotation in
+            let annotation = createAnnotation(forObject: mapObject)
+            objectToAnnotations?[annotation] = mapObject
+            return annotation
+        }
+        
+//        objects.forEach { (object) in
+//            let annotation = createAnnotation(forObject: object)
+//            objectToAnnotations?[annotation] = object
+//
+//            DispatchQueue.main.async(execute: {
+//                self.mapView.addAnnotation(annotation)
+//            })
+//        }
+        
+        DispatchQueue.main.async {
+            self.mapView.removeAnnotations(self.mapView.annotations)
+            self.mapView.addAnnotations(newAnnotations)
         }
         
         completion?()
@@ -309,33 +337,5 @@ public extension QueryMapViewController {
     
     func loadObjectsFailed(_ error : NSError){
         print("failed to load objects with error: \(error)")
-    }
-    
-    
-    func clearExistingAnnotations() {
-        DispatchQueue.main.async { 
-            self.mapView.removeAnnotations(self.mapView.annotations)
-        }
-        
-        self.objectToAnnotations?.removeAll(keepingCapacity: true)
-    }
-    
-    open func refreshLoadingView() {
-        //Can be overridden to show a loading view
-        
-        if loadingViewEnabled {
-            loadingView?.removeFromSuperview()
-            loadingViewEnabled = false
-        }
-        else {
-            if let _ = loadingView { } else {
-                let center = self.view.center
-                let size = CGSize(width: self.view.frame.size.width / 3, height: self.view.frame.size.width / 3)
-                loadingView = UIView(frame: CGRect(origin: center, size: size))
-                loadingViewEnabled = false
-            }
-            
-            self.view.addSubview(loadingView!)
-        }
     }
 }
