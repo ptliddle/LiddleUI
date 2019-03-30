@@ -26,10 +26,10 @@ open class ContainerViewController : UIViewController {
         completedTransitionClosure = { (container : UIViewController, fromVC : UIViewController, toVC : UIViewController) in
             
             fromVC.view.removeFromSuperview()
-            fromVC.removeFromParent()
+            fromVC.removeFromParentViewController()
             
             container.view.addSubview(toVC.view)
-            toVC.didMove(toParent: container)
+            toVC.didMove(toParentViewController: container)
             self.currentController = toVC
         }
     }
@@ -43,10 +43,10 @@ open class ContainerViewController : UIViewController {
             self.moveFromViewController(from: cc, to: destinationVC)
         }
         else {
-            destinationVC.willMove(toParent: self)
-            self.addChild(destinationVC as UIViewController)
+            destinationVC.willMove(toParentViewController: self)
+            self.addChildViewController(destinationVC as UIViewController)
             self.view.addSubview(destinationView)
-            destinationVC.didMove(toParent:self)
+            destinationVC.didMove(toParentViewController:self)
         }
         
         self.currentController = destinationVC
@@ -56,9 +56,9 @@ open class ContainerViewController : UIViewController {
     
     func moveFromViewController(from : UIViewController, to : UIViewController){
         DispatchQueue.main.async {
-            to.willMove(toParent: self)
+            to.willMove(toParentViewController: self)
             to.view?.frame = CGRect(origin: CGPoint.zero, size: CGSize(width: self.view.frame.width, height: self.view.frame.height))
-            self.addChild(to)
+            self.addChildViewController(to)
             self.completedTransitionClosure?(self, from, to)
         }
     }

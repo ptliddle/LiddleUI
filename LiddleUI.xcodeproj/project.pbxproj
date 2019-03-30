@@ -8,6 +8,11 @@
 
 /* Begin PBXBuildFile section */
 		5993BD48128DE1BE409B32BF /* Pods_LiddleUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D35D0B3F6B9DE7CB3A74798A /* Pods_LiddleUI.framework */; };
+		D02787F0224EF5540089847B /* Decimal+Helpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = D02787EB224EF5540089847B /* Decimal+Helpers.swift */; };
+		D02787F1224EF5540089847B /* SwitchableSegue.swift in Sources */ = {isa = PBXBuildFile; fileRef = D02787EC224EF5540089847B /* SwitchableSegue.swift */; };
+		D02787F2224EF5540089847B /* ContainerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D02787ED224EF5540089847B /* ContainerViewController.swift */; };
+		D02787F3224EF5540089847B /* SwitchableViewControllerContainerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D02787EE224EF5540089847B /* SwitchableViewControllerContainerViewController.swift */; };
+		D02787F4224EF5540089847B /* UIViewController+Alerts.swift in Sources */ = {isa = PBXBuildFile; fileRef = D02787EF224EF5540089847B /* UIViewController+Alerts.swift */; };
 		D07E99831CEA49F3008AC7A2 /* LiddleUI.h in Headers */ = {isa = PBXBuildFile; fileRef = D07E99821CEA49F3008AC7A2 /* LiddleUI.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		D07E998F1CEA4A2D008AC7A2 /* EmptySegue.swift in Sources */ = {isa = PBXBuildFile; fileRef = D07E998B1CEA4A2D008AC7A2 /* EmptySegue.swift */; };
 		D07E99931CEA4A85008AC7A2 /* LiddleUI.podspec in Resources */ = {isa = PBXBuildFile; fileRef = D07E99921CEA4A85008AC7A2 /* LiddleUI.podspec */; };
@@ -17,6 +22,11 @@
 /* Begin PBXFileReference section */
 		00DB4633328E8ADF6782565E /* Pods-LiddleUI.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-LiddleUI.debug.xcconfig"; path = "Pods/Target Support Files/Pods-LiddleUI/Pods-LiddleUI.debug.xcconfig"; sourceTree = "<group>"; };
 		8EFA96D23428A7C2AD4C8C1C /* Pods-LiddleUI.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-LiddleUI.release.xcconfig"; path = "Pods/Target Support Files/Pods-LiddleUI/Pods-LiddleUI.release.xcconfig"; sourceTree = "<group>"; };
+		D02787EB224EF5540089847B /* Decimal+Helpers.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Decimal+Helpers.swift"; sourceTree = "<group>"; };
+		D02787EC224EF5540089847B /* SwitchableSegue.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SwitchableSegue.swift; sourceTree = "<group>"; };
+		D02787ED224EF5540089847B /* ContainerViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContainerViewController.swift; sourceTree = "<group>"; };
+		D02787EE224EF5540089847B /* SwitchableViewControllerContainerViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SwitchableViewControllerContainerViewController.swift; sourceTree = "<group>"; };
+		D02787EF224EF5540089847B /* UIViewController+Alerts.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "UIViewController+Alerts.swift"; sourceTree = "<group>"; };
 		D07E997F1CEA49F3008AC7A2 /* LiddleUI.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = LiddleUI.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		D07E99821CEA49F3008AC7A2 /* LiddleUI.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LiddleUI.h; sourceTree = "<group>"; };
 		D07E99841CEA49F3008AC7A2 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -76,6 +86,11 @@
 		D07E99811CEA49F3008AC7A2 /* LiddleUI */ = {
 			isa = PBXGroup;
 			children = (
+				D02787ED224EF5540089847B /* ContainerViewController.swift */,
+				D02787EB224EF5540089847B /* Decimal+Helpers.swift */,
+				D02787EC224EF5540089847B /* SwitchableSegue.swift */,
+				D02787EE224EF5540089847B /* SwitchableViewControllerContainerViewController.swift */,
+				D02787EF224EF5540089847B /* UIViewController+Alerts.swift */,
 				D092412C1D8CE82E00DDAE7A /* QueryMapViewController.swift */,
 				D07E99921CEA4A85008AC7A2 /* LiddleUI.podspec */,
 				D07E998B1CEA4A2D008AC7A2 /* EmptySegue.swift */,
@@ -202,6 +217,11 @@
 			files = (
 				D092412D1D8CE82E00DDAE7A /* QueryMapViewController.swift in Sources */,
 				D07E998F1CEA4A2D008AC7A2 /* EmptySegue.swift in Sources */,
+				D02787F2224EF5540089847B /* ContainerViewController.swift in Sources */,
+				D02787F0224EF5540089847B /* Decimal+Helpers.swift in Sources */,
+				D02787F1224EF5540089847B /* SwitchableSegue.swift in Sources */,
+				D02787F4224EF5540089847B /* UIViewController+Alerts.swift in Sources */,
+				D02787F3224EF5540089847B /* SwitchableViewControllerContainerViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

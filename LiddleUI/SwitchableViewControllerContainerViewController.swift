@@ -59,7 +59,7 @@ import UIKit
         }
         
         var existingInstance: UIViewController?
-        for childViewController in children {
+        for childViewController in childViewControllers {
             if childViewController.isKind(of: type(of: segue.destination)) {
                 existingInstance = childViewController
             }
@@ -68,11 +68,11 @@ import UIKit
         let newCurrentVC: UIViewController
         if let existingInstance = existingInstance {
             newCurrentVC = existingInstance
-            self.view.bringSubviewToFront(newCurrentVC.view)
+            self.view.bringSubview(toFront: newCurrentVC.view)
 
         } else {
             newCurrentVC = segue.destination
-            self.addChild(newCurrentVC)
+            self.addChildViewController(newCurrentVC)
             newCurrentVC.view.frame = self.view.bounds
             self.view.addSubview(newCurrentVC.view)
         }
@@ -87,7 +87,7 @@ import UIKit
     }
     
     private func hideAllViews(exceptViewFoVC vcToShow : UIViewController) {
-        self.children.forEach({ vc in
+        self.childViewControllers.forEach({ vc in
             if(vc != vcToShow) {
                 vc.view.isHidden = true
             }
